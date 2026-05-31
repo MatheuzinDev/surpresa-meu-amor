@@ -3,17 +3,20 @@ import { getAnalytics, isSupported as isAnalyticsSupported } from "firebase/anal
 import {
   browserSessionPersistence,
   getAuth,
+  onAuthStateChanged,
   setPersistence,
   signInWithEmailAndPassword,
   signOut
 } from "firebase/auth";
 import {
   collection,
+  deleteDoc,
   doc,
   getFirestore,
   onSnapshot,
   serverTimestamp,
-  setDoc
+  setDoc,
+  updateDoc
 } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -40,11 +43,23 @@ const hoursTogether = document.getElementById("hoursTogether");
 const minutesTogether = document.getElementById("minutesTogether");
 const heartsContainer = document.getElementById("heartsContainer");
 const momentForm = document.getElementById("momentForm");
+const momentFormTitle = document.getElementById("momentFormTitle");
 const saveMomentButton = document.getElementById("saveMomentButton");
+const loginButton = document.getElementById("loginButton");
+const cancelEditButton = document.getElementById("cancelEditButton");
 const formStatus = document.getElementById("formStatus");
+const authFields = document.getElementById("authFields");
+const accessEmailInput = document.getElementById("accessEmail");
+const accessPasswordInput = document.getElementById("accessPassword");
+const managerStatus = document.getElementById("managerStatus");
+const managerStatusText = document.getElementById("managerStatusText");
+const logoutButton = document.getElementById("logoutButton");
 const momentModal = document.getElementById("momentModal");
 const momentModalBackdrop = document.getElementById("momentModalBackdrop");
 const closeMomentModalButton = document.getElementById("closeMomentModal");
+const modalMomentActions = document.getElementById("modalMomentActions");
+const editMomentButton = document.getElementById("editMomentButton");
+const deleteMomentButton = document.getElementById("deleteMomentButton");
 const modalMomentImage = document.getElementById("modalMomentImage");
 const modalMomentPlaceholder = document.getElementById("modalMomentPlaceholder");
 const modalMomentDate = document.getElementById("modalMomentDate");
@@ -57,6 +72,9 @@ let firebaseReady = false;
 let moments = [];
 let timelineObserver = null;
 let elementFocusedBeforeModal = null;
+let currentUser = null;
+let currentModalMoment = null;
+let editingMoment = null;
 
 const maxImageSizeInBytes = 5 * 1024 * 1024;
 
@@ -116,6 +134,7 @@ function isSafeImageUrl(url) {
 function openMomentModal(moment) {
   const imageUrl = isSafeImageUrl(moment.imageUrl);
   elementFocusedBeforeModal = document.activeElement;
+  currentModalMoment = moment;
 
   modalMomentDate.textContent = formatDate(moment.date);
   modalMomentTitle.textContent = moment.title;
@@ -135,6 +154,7 @@ function openMomentModal(moment) {
 
   momentModal.hidden = false;
   document.body.classList.add("modal-open");
+  updateModalActions();
   closeMomentModalButton.focus();
 }
 
@@ -145,6 +165,7 @@ function closeMomentModal() {
 
   momentModal.hidden = true;
   document.body.classList.remove("modal-open");
+  currentModalMoment = null;
 
   if (elementFocusedBeforeModal && typeof elementFocusedBeforeModal.focus === "function") {
     elementFocusedBeforeModal.focus();
@@ -155,6 +176,83 @@ function handleModalKeydown(event) {
   if (event.key === "Escape") {
     closeMomentModal();
   }
+}
+
+function updateModalActions() {
+  modalMomentActions.hidden = !currentUser || !currentModalMoment;
+}
+
+function updateManagerState() {
+  const isLoggedIn = Boolean(currentUser);
+
+  managerStatus.hidden = !isLoggedIn;
+  authFields.hidden = isLoggedIn;
+  loginButton.hidden = isLoggedIn;
+  accessEmailInput.disabled = isLoggedIn;
+  accessPasswordInput.disabled = isLoggedIn;
+  accessEmailInput.required = !isLoggedIn;
+  accessPasswordInput.required = !isLoggedIn;
+
+  if (isLoggedIn) {
+    managerStatusText.textContent = `Modo edição ativo: ${currentUser.email}`;
+    accessPasswordInput.value = "";
+  }
+
+  updateModalActions();
+}
+
+function getAuthFields() {
+  return {
+    accessEmail: accessEmailInput.value.trim().toLowerCase(),
+    password: accessPasswordInput.value
+  };
+}
+
+async function getAuthenticatedUser() {
+  if (currentUser) {
+    return currentUser;
+  }
+
+  const { accessEmail, password } = getAuthFields();
+
+  if (!accessEmail || !password) {
+    throw new Error("Digite e-mail e senha para continuar.");
+  }
+
+  const credential = await signInWithEmailAndPassword(auth, accessEmail, password);
+  return credential.user;
+}
+
+function resetMomentForm(options = {}) {
+  const { clearStatus = true } = options;
+
+  editingMoment = null;
+  momentForm.reset();
+  momentFormTitle.textContent = "Adicionar momento nosso";
+  saveMomentButton.textContent = "Salvar momento";
+  cancelEditButton.hidden = true;
+  accessPasswordInput.value = "";
+
+  if (clearStatus) {
+    setFormStatus(currentUser
+      ? "Modo edição ativo. Você pode adicionar, editar ou apagar momentos."
+      : "Digite um e-mail autorizado e a senha para salvar um novo momento."
+    );
+  }
+}
+
+function startEditMoment(moment) {
+  editingMoment = moment;
+  document.getElementById("momentDate").value = moment.date;
+  document.getElementById("momentTitle").value = moment.title;
+  document.getElementById("momentDescription").value = moment.description;
+  document.getElementById("momentImage").value = "";
+  momentFormTitle.textContent = "Editar momento";
+  saveMomentButton.textContent = "Atualizar momento";
+  cancelEditButton.hidden = false;
+  closeMomentModal();
+  setFormStatus("Edite os campos e salve. Se escolher uma nova foto, a antiga será substituída.");
+  momentForm.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
 function createTimelineItem(moment, index) {
@@ -332,6 +430,27 @@ async function uploadMomentImage(file) {
   };
 }
 
+async function deleteCloudinaryImage(publicId) {
+  if (!publicId || !currentUser) {
+    return;
+  }
+
+  const token = await currentUser.getIdToken();
+  const response = await fetch("/api/delete-cloudinary-image", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${token}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ publicId })
+  });
+  const result = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(result.error || "Não foi possível apagar a imagem.");
+  }
+}
+
 function initAnalytics(app) {
   if (!firebaseConfig.measurementId) {
     return;
@@ -362,6 +481,15 @@ async function initFirebase() {
     await setPersistence(auth, browserSessionPersistence);
     db = getFirestore(app);
     firebaseReady = true;
+
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      updateManagerState();
+
+      if (user) {
+        setFormStatus("Modo edição ativo. Você pode adicionar, editar ou apagar momentos.");
+      }
+    });
 
     saveMomentButton.disabled = false;
     setTimelineStatus("Carregando momentos...");
@@ -398,13 +526,11 @@ async function handleMomentSubmit(event) {
     title: document.getElementById("momentTitle").value.trim(),
     description: document.getElementById("momentDescription").value.trim(),
   };
-  const accessEmail = document.getElementById("accessEmail").value.trim().toLowerCase();
-  const password = document.getElementById("accessPassword").value;
   const imageFile = getSelectedImageFile();
   const imageError = validateImageFile(imageFile);
 
-  if (!formData.date || !formData.title || !formData.description || !accessEmail || !password) {
-    setFormStatus("Preencha data, título, descrição, e-mail e senha para salvar.", "error");
+  if (!formData.date || !formData.title || !formData.description) {
+    setFormStatus("Preencha data, título e descrição para salvar.", "error");
     return;
   }
 
@@ -414,23 +540,56 @@ async function handleMomentSubmit(event) {
   }
 
   saveMomentButton.disabled = true;
-  setFormStatus("Validando senha e salvando momento...");
+  setFormStatus(currentUser ? "Salvando momento..." : "Validando acesso e salvando momento...");
 
   try {
-    await signInWithEmailAndPassword(auth, accessEmail, password);
+    const user = await getAuthenticatedUser();
+
+    if (editingMoment) {
+      let imageData = {};
+      const oldPublicId = editingMoment.cloudinaryPublicId;
+
+      if (imageFile) {
+        imageData = await uploadMomentImage(imageFile);
+      }
+
+      setFormStatus("Atualizando momento...");
+      await updateDoc(doc(db, "momentos", editingMoment.id), {
+        ...formData,
+        ...(imageFile ? imageData : {
+          imageUrl: editingMoment.imageUrl || "",
+          cloudinaryPublicId: editingMoment.cloudinaryPublicId || ""
+        }),
+        updatedAt: serverTimestamp(),
+        updatedBy: user.email
+      });
+
+      if (imageFile && oldPublicId && oldPublicId !== imageData.cloudinaryPublicId) {
+        try {
+          await deleteCloudinaryImage(oldPublicId);
+        } catch (deleteError) {
+          setFormStatus(`Momento atualizado, mas a foto antiga não foi removida: ${deleteError.message}`, "error");
+          resetMomentForm({ clearStatus: false });
+          return;
+        }
+      }
+
+      resetMomentForm({ clearStatus: false });
+      setFormStatus("Momento atualizado com sucesso.", "success");
+      return;
+    }
 
     const momentReference = doc(collection(db, "momentos"));
     const imageData = await uploadMomentImage(imageFile);
-
     setFormStatus("Salvando momento...");
     await setDoc(momentReference, {
       ...formData,
       ...imageData,
       createdAt: serverTimestamp(),
-      createdBy: accessEmail
+      createdBy: user.email
     });
 
-    momentForm.reset();
+    resetMomentForm({ clearStatus: false });
     setFormStatus("Momento salvo com sucesso.", "success");
   } catch (error) {
     const wrongPasswordCodes = ["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found"];
@@ -446,9 +605,86 @@ async function handleMomentSubmit(event) {
 
     setFormStatus(message, "error");
   } finally {
-    await signOut(auth).catch(() => {});
     saveMomentButton.disabled = false;
     document.getElementById("accessPassword").value = "";
+  }
+}
+
+async function handleLoginClick() {
+  if (!firebaseReady) {
+    setFormStatus("Não foi possível preparar o acesso.", "error");
+    return;
+  }
+
+  loginButton.disabled = true;
+  setFormStatus("Validando acesso...");
+
+  try {
+    await getAuthenticatedUser();
+    setFormStatus("Acesso liberado. Abra um momento para editar ou apagar.", "success");
+  } catch (error) {
+    const wrongPasswordCodes = ["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found"];
+    const message = wrongPasswordCodes.includes(error.code)
+      ? "E-mail ou senha incorretos."
+      : `Não foi possível entrar: ${error.message}`;
+
+    setFormStatus(message, "error");
+  } finally {
+    loginButton.disabled = false;
+    accessPasswordInput.value = "";
+  }
+}
+
+async function handleLogoutClick() {
+  await signOut(auth);
+  resetMomentForm({ clearStatus: false });
+  setFormStatus("Você saiu do modo edição.");
+}
+
+async function handleDeleteMoment() {
+  if (!currentModalMoment || !currentUser) {
+    return;
+  }
+
+  const shouldDelete = window.confirm("Tem certeza que deseja apagar este momento?");
+  if (!shouldDelete) {
+    return;
+  }
+
+  const momentToDelete = currentModalMoment;
+  deleteMomentButton.disabled = true;
+  editMomentButton.disabled = true;
+
+  try {
+    await deleteDoc(doc(db, "momentos", momentToDelete.id));
+
+    let imageDeleteError = null;
+
+    if (momentToDelete.cloudinaryPublicId) {
+      try {
+        await deleteCloudinaryImage(momentToDelete.cloudinaryPublicId);
+      } catch (error) {
+        imageDeleteError = error;
+      }
+    }
+
+    if (editingMoment?.id === momentToDelete.id) {
+      resetMomentForm({ clearStatus: false });
+    }
+
+    closeMomentModal();
+
+    if (imageDeleteError) {
+      setFormStatus(`Momento apagado, mas a imagem pode precisar ser removida manualmente: ${imageDeleteError.message}`, "error");
+      return;
+    }
+
+    setFormStatus("Momento apagado com sucesso.", "success");
+  } catch (error) {
+    setFormStatus(`Não foi possível apagar o momento: ${error.message}`, "error");
+  } finally {
+    deleteMomentButton.disabled = false;
+    editMomentButton.disabled = false;
   }
 }
 
@@ -459,6 +695,15 @@ initFirebase();
 window.setInterval(updateCounter, 60000);
 window.setInterval(createHeart, 900);
 momentForm.addEventListener("submit", handleMomentSubmit);
+loginButton.addEventListener("click", handleLoginClick);
+logoutButton.addEventListener("click", handleLogoutClick);
+cancelEditButton.addEventListener("click", () => resetMomentForm());
+editMomentButton.addEventListener("click", () => {
+  if (currentModalMoment) {
+    startEditMoment(currentModalMoment);
+  }
+});
+deleteMomentButton.addEventListener("click", handleDeleteMoment);
 closeMomentModalButton.addEventListener("click", closeMomentModal);
 momentModalBackdrop.addEventListener("click", closeMomentModal);
 window.addEventListener("keydown", handleModalKeydown);

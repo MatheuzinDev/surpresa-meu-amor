@@ -213,6 +213,16 @@ header {
   border: 1px solid rgba(255, 255, 255, 0.20);
 }
 
+.btn-danger {
+  background: linear-gradient(135deg, #cf1731, #7f0c1d);
+  box-shadow: 0 14px 34px rgba(255, 48, 79, 0.28);
+}
+
+.btn-small {
+  padding: 10px 16px;
+  font-size: 0.9rem;
+}
+
 .btn:hover:not(:disabled) {
   transform: translateY(-3px);
   box-shadow: 0 18px 42px rgba(255, 48, 79, 0.32);
@@ -462,6 +472,24 @@ section {
   margin-bottom: 22px;
 }
 
+.manager-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 22px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.manager-status[hidden] {
+  display: none;
+}
+
 .moment-form {
   display: grid;
   gap: 16px;
@@ -471,6 +499,16 @@ section {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
+}
+
+.auth-fields[hidden] {
+  display: none;
+}
+
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 label {
@@ -646,6 +684,17 @@ textarea:focus {
   font-size: 1.02rem;
 }
 
+.moment-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.moment-modal-actions[hidden] {
+  display: none;
+}
+
 .final-section {
   text-align: center;
   padding-bottom: 110px;
@@ -735,6 +784,11 @@ footer {
 
   .counter-grid {
     grid-template-columns: 1fr;
+  }
+
+  .manager-status {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .message-card,
