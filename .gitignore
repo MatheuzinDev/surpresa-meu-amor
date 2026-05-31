@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+.vite/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# Firebase local/cache files
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Editor folders
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Coverage/test output
+coverage/

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Matheus & Cecília | Nossa História</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="hearts-container" id="heartsContainer"></div>
+
+  <main class="page">
+    <header>
+      <div class="hero">
+        <div class="hero-content">
+          <div class="badge">Uma surpresa feita com carinho</div>
+          <h1>Matheus <span>& Cecília</span></h1>
+          <p>
+            Um cantinho para guardar o que a gente viveu, o que a gente sente e tudo aquilo
+            que ainda vamos construir juntos. Nossa história começou de um jeito especial e
+            merece ser lembrada com amor, detalhes e muitos momentos nossos.
+          </p>
+          <div class="hero-actions">
+            <a href="#linha-do-tempo" class="btn btn-primary">Ver momentos nossos</a>
+            <a href="#mensagem" class="btn btn-secondary">Ler mensagem especial</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <section id="mensagem">
+      <div class="container">
+        <div class="section-title">
+          <div class="subtitle">Para Cecília</div>
+          <h2>Um pedaço do que sinto</h2>
+          <p>
+            Esta página é uma forma simples de transformar lembranças em algo que fica,
+            para que cada momento importante tenha sempre um lugar só nosso.
+          </p>
+        </div>
+
+        <div class="love-card">
+          <div class="message-card">
+            <h3>Meu amor,</h3>
+            <p>
+              Eu fiz essa página para registrar um pouco da nossa história. Desde o dia em que
+              começamos a ficar, em 31/12/2025, até o começo oficial do nosso namoro, em
+              16/02/2026, cada detalhe ao seu lado se tornou especial para mim. Que esse lugar
+              guarde nossas risadas, nossos planos, nossas fotos e todos os momentos que fazem
+              eu lembrar o quanto você é importante na minha vida.
+            </p>
+          </div>
+
+          <div class="counter-card">
+            <h3>Nosso namoro</h3>
+            <p>
+              Contando desde 16/02/2026, o dia em que a nossa história virou namoro oficialmente.
+            </p>
+
+            <div class="counter-grid">
+              <div class="counter-item">
+                <strong id="daysTogether">0</strong>
+                <span>dias</span>
+              </div>
+              <div class="counter-item">
+                <strong id="hoursTogether">0</strong>
+                <span>horas</span>
+              </div>
+              <div class="counter-item">
+                <strong id="minutesTogether">0</strong>
+                <span>minutos</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="linha-do-tempo">
+      <div class="container">
+        <div class="section-title">
+          <div class="subtitle">Momentos nossos</div>
+          <h2>Nossa linha do tempo</h2>
+          <p>
+            Os primeiros capítulos já estão aqui. Depois, vocês podem adicionar novos momentos
+            com a senha de vocês, e eles ficam salvos online para abrir em qualquer dispositivo.
+          </p>
+        </div>
+
+        <p class="timeline-status" id="timelineStatus"></p>
+        <div class="timeline" id="timeline"></div>
+
+        <div class="moment-form-card">
+          <h3>Adicionar momento nosso</h3>
+          <p>
+            Qualquer pessoa pode ver a página, mas só as contas autorizadas conseguem salvar um novo
+            momento online. O e-mail e a senha são validados pelo Firebase, não ficam escritos no site.
+            A foto vai direto para o Cloudinary e os textos ficam no Firestore.
+          </p>
+
+          <form class="moment-form" id="momentForm">
+            <div class="form-grid">
+              <label for="momentDate">
+                Data do momento
+                <input id="momentDate" type="date" required>
+              </label>
+
+              <label for="momentTitle">
+                Título
+                <input id="momentTitle" type="text" maxlength="80" placeholder="Ex: Nosso primeiro passeio" required>
+              </label>
+            </div>
+
+            <label for="momentDescription">
+              Descrição
+              <textarea id="momentDescription" maxlength="700" placeholder="Conte o que aconteceu e por que esse momento foi especial." required></textarea>
+            </label>
+
+            <div class="form-grid">
+              <label for="momentImage">
+                Foto da galeria, opcional
+                <input id="momentImage" type="file" accept="image/*">
+              </label>
+
+              <label for="accessEmail">
+                E-mail autorizado
+                <input id="accessEmail" type="email" autocomplete="username" placeholder="Digite seu e-mail" required>
+              </label>
+            </div>
+
+            <div class="form-grid">
+              <label for="accessPassword">
+                Senha
+                <input id="accessPassword" type="password" autocomplete="current-password" placeholder="Digite a senha para salvar" required>
+              </label>
+            </div>
+
+            <button class="btn btn-primary" id="saveMomentButton" type="submit">Salvar momento online</button>
+            <p class="form-status" id="formStatus"></p>
+          </form>
+        </div>
+
+        <div class="setup-card" id="setupCard">
+          <h3>Configuração necessária</h3>
+          <p>
+            Para ativar o salvamento online, crie as contas no Firebase Authentication e publique
+            as regras do arquivo <code>firestore.rules</code> no Firestore Database.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="final-section">
+      <div class="container">
+        <div class="final-card">
+          <h2>Feliz Dia dos Namorados</h2>
+          <p>
+            Que a nossa história continue sendo escrita com carinho, parceria, cuidado e amor.
+            Que cada novo capítulo tenha um motivo para sorrir e que a gente nunca esqueça de
+            valorizar os pequenos detalhes que fazem tudo valer a pena.
+          </p>
+          <a href="#linha-do-tempo" class="btn btn-primary">Guardar mais um momento</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Feito por Matheus para Cecília.
+  </footer>
+
+  <div class="moment-modal" id="momentModal" role="dialog" aria-modal="true" aria-labelledby="modalMomentTitle" hidden>
+    <div class="moment-modal-backdrop" id="momentModalBackdrop"></div>
+    <div class="moment-modal-card" role="document">
+      <button class="moment-modal-close" id="closeMomentModal" type="button" aria-label="Fechar momento">×</button>
+      <img class="moment-modal-image" id="modalMomentImage" alt="" hidden>
+      <div class="moment-modal-placeholder" id="modalMomentPlaceholder" hidden>Foto desse momento pode entrar aqui</div>
+      <span class="moment-modal-date" id="modalMomentDate"></span>
+      <h3 id="modalMomentTitle"></h3>
+      <p id="modalMomentDescription"></p>
+    </div>
+  </div>
+
+  <script type="module" src="./script.js"></script>
+</body>
+</html>

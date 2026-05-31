@@ -1,0 +1,25 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthorizedUser() {
+      return request.auth != null
+        && request.auth.token.email in [
+          "matheusdiogenesamorim05@gmail.com",
+          "anacecilia13.gadelha@gmail.com"
+        ];
+    }
+
+    match /momentos/{momentoId} {
+      allow read: if true;
+      allow create: if isAuthorizedUser()
+        && request.resource.data.date is string
+        && request.resource.data.title is string
+        && request.resource.data.description is string
+        && request.resource.data.imageUrl is string
+        && request.resource.data.cloudinaryPublicId is string
+        && request.resource.data.createdBy == request.auth.token.email;
+      allow update, delete: if false;
+    }
+  }
+}
