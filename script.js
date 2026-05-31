@@ -41,6 +41,7 @@ const timelineStatus = document.getElementById("timelineStatus");
 const daysTogether = document.getElementById("daysTogether");
 const hoursTogether = document.getElementById("hoursTogether");
 const minutesTogether = document.getElementById("minutesTogether");
+const secondsTogether = document.getElementById("secondsTogether");
 const heartsContainer = document.getElementById("heartsContainer");
 const managementPanel = document.getElementById("managementPanel");
 const secretAccessButton = document.getElementById("secretAccessButton");
@@ -527,13 +528,17 @@ function renderManagementList() {
 function updateCounter() {
   const now = new Date();
   const diff = Math.max(0, now.getTime() - relationshipStart.getTime());
-  const totalMinutes = Math.floor(diff / 60000);
-  const totalHours = Math.floor(diff / 3600000);
+  const remainingAfterDays = diff % 86400000;
+  const remainingAfterHours = remainingAfterDays % 3600000;
   const totalDays = Math.floor(diff / 86400000);
+  const hours = Math.floor(remainingAfterDays / 3600000);
+  const minutes = Math.floor(remainingAfterHours / 60000);
+  const seconds = Math.floor((remainingAfterHours % 60000) / 1000);
 
   daysTogether.textContent = totalDays.toLocaleString("pt-BR");
-  hoursTogether.textContent = totalHours.toLocaleString("pt-BR");
-  minutesTogether.textContent = totalMinutes.toLocaleString("pt-BR");
+  hoursTogether.textContent = String(hours).padStart(2, "0");
+  minutesTogether.textContent = String(minutes).padStart(2, "0");
+  secondsTogether.textContent = String(seconds).padStart(2, "0");
 }
 
 function createHeart() {
@@ -910,7 +915,7 @@ renderTimeline();
 updateCounter();
 initFirebase();
 
-window.setInterval(updateCounter, 60000);
+window.setInterval(updateCounter, 1000);
 window.setInterval(createHeart, 900);
 momentForm.addEventListener("submit", handleMomentSubmit);
 loginForm.addEventListener("submit", handleLoginSubmit);

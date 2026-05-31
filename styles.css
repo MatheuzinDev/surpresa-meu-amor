@@ -264,6 +264,14 @@ section {
   line-height: 1.8;
 }
 
+#mensagem .section-title .subtitle {
+  font-size: clamp(1.2rem, 3vw, 1.9rem);
+}
+
+#mensagem .section-title h2 {
+  font-size: clamp(1.5rem, 3.5vw, 2.45rem);
+}
+
 .love-card {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -300,7 +308,7 @@ section {
 
 .counter-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 12px;
   margin-top: 22px;
 }
@@ -1003,6 +1011,10 @@ footer {
 
   .management-actions {
     justify-content: flex-start;
+  }
+
+  .counter-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 
   .timeline::before {
