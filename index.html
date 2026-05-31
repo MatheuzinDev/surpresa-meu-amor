@@ -86,8 +86,8 @@
           <div class="subtitle">Momentos nossos</div>
           <h2>Nossa linha do tempo</h2>
           <p>
-            Os primeiros capítulos já estão aqui. Depois, vocês podem adicionar novos momentos
-            com a senha de vocês, e eles ficam salvos online para abrir em qualquer dispositivo.
+            Cada lembrança importante pode ganhar um lugar especial aqui, para vocês
+            relembrarem sempre que quiserem.
           </p>
         </div>
 
@@ -97,9 +97,8 @@
         <div class="moment-form-card">
           <h3>Adicionar momento nosso</h3>
           <p>
-            Qualquer pessoa pode ver a página, mas só as contas autorizadas conseguem salvar um novo
-            momento online. O e-mail e a senha são validados pelo Firebase, não ficam escritos no site.
-            A foto vai direto para o Cloudinary e os textos ficam no Firestore.
+            Qualquer pessoa pode ver a página, mas só vocês conseguem guardar uma nova lembrança.
+            Preencha os detalhes do momento e escolha uma foto especial.
           </p>
 
           <form class="moment-form" id="momentForm">
@@ -139,17 +138,9 @@
               </label>
             </div>
 
-            <button class="btn btn-primary" id="saveMomentButton" type="submit">Salvar momento online</button>
+            <button class="btn btn-primary" id="saveMomentButton" type="submit">Salvar momento</button>
             <p class="form-status" id="formStatus"></p>
           </form>
-        </div>
-
-        <div class="setup-card" id="setupCard">
-          <h3>Configuração necessária</h3>
-          <p>
-            Para ativar o salvamento online, crie as contas no Firebase Authentication e publique
-            as regras do arquivo <code>firestore.rules</code> no Firestore Database.
-          </p>
         </div>
       </div>
     </section>

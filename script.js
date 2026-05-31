@@ -32,22 +32,6 @@ const cloudinaryConfig = {
 };
 
 const relationshipStart = new Date("2026-02-16T00:00:00-03:00");
-const baseMoments = [
-  {
-    id: "ficamos",
-    date: "2025-12-31",
-    title: "Quando começamos a ficar",
-    description: "No último dia de 2025, começou uma parte linda da nossa história. Um começo leve, especial e cheio daquele sentimento bom de querer estar perto.",
-    imageUrl: ""
-  },
-  {
-    id: "namoro",
-    date: "2026-02-16",
-    title: "O início do nosso namoro",
-    description: "No dia 16/02/2026, nossa história ganhou uma data oficial. Foi quando Matheus e Cecília começaram a escrever esse amor como namorados.",
-    imageUrl: ""
-  }
-];
 
 const timeline = document.getElementById("timeline");
 const timelineStatus = document.getElementById("timelineStatus");
@@ -58,7 +42,6 @@ const heartsContainer = document.getElementById("heartsContainer");
 const momentForm = document.getElementById("momentForm");
 const saveMomentButton = document.getElementById("saveMomentButton");
 const formStatus = document.getElementById("formStatus");
-const setupCard = document.getElementById("setupCard");
 const momentModal = document.getElementById("momentModal");
 const momentModalBackdrop = document.getElementById("momentModalBackdrop");
 const closeMomentModalButton = document.getElementById("closeMomentModal");
@@ -71,7 +54,7 @@ const modalMomentDescription = document.getElementById("modalMomentDescription")
 let db = null;
 let auth = null;
 let firebaseReady = false;
-let onlineMoments = [];
+let moments = [];
 let timelineObserver = null;
 let elementFocusedBeforeModal = null;
 
@@ -245,12 +228,19 @@ function observeTimelineItems() {
 }
 
 function renderTimeline() {
-  const allMoments = [...baseMoments, ...onlineMoments]
+  const allMoments = [...moments]
     .map((moment, index) => normalizeMoment(moment, `moment-${index}`))
     .filter((moment) => moment.date && moment.title && moment.description)
     .sort((a, b) => a.date.localeCompare(b.date));
 
   timeline.innerHTML = "";
+
+  if (!allMoments.length) {
+    setTimelineStatus("Ainda não há momentos por aqui. Adicione o primeiro.");
+    return;
+  }
+
+  setTimelineStatus("");
 
   allMoments.forEach((moment, index) => {
     timeline.appendChild(createTimelineItem(moment, index));
@@ -314,14 +304,14 @@ async function uploadMomentImage(file) {
   }
 
   if (!cloudinaryConfig.cloudName || !cloudinaryConfig.uploadPreset) {
-    throw new Error("Configuração do Cloudinary incompleta.");
+    throw new Error("Não foi possível preparar o envio da foto.");
   }
 
   const uploadData = new FormData();
   uploadData.append("file", file);
   uploadData.append("upload_preset", cloudinaryConfig.uploadPreset);
 
-  setFormStatus("Enviando foto para o Cloudinary...");
+  setFormStatus("Enviando foto...");
   const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/image/upload`, {
     method: "POST",
     body: uploadData
@@ -329,11 +319,11 @@ async function uploadMomentImage(file) {
   const result = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(result.error?.message || "Falha ao enviar a foto para o Cloudinary.");
+    throw new Error(result.error?.message || "Falha ao enviar a foto.");
   }
 
   if (!result.secure_url) {
-    throw new Error("O Cloudinary não retornou a URL da imagem.");
+    throw new Error("Não foi possível obter a imagem enviada.");
   }
 
   return {
@@ -359,9 +349,8 @@ function initAnalytics(app) {
 async function initFirebase() {
   if (!isFirebaseConfigured()) {
     saveMomentButton.disabled = true;
-    setupCard.hidden = false;
-    setTimelineStatus("Salvamento online ainda não configurado. Os momentos iniciais já aparecem normalmente.");
-    setFormStatus("Confira os dados do firebaseConfig no script.js para liberar o botão de salvar.", "error");
+    setTimelineStatus("Ainda não há momentos por aqui. Adicione o primeiro.");
+    setFormStatus("Não foi possível preparar o salvamento.", "error");
     return;
   }
 
@@ -374,30 +363,25 @@ async function initFirebase() {
     db = getFirestore(app);
     firebaseReady = true;
 
-    setupCard.hidden = true;
     saveMomentButton.disabled = false;
-    setTimelineStatus("Carregando momentos salvos online...");
+    setTimelineStatus("Carregando momentos...");
     setFormStatus("Digite um e-mail autorizado e a senha para salvar um novo momento.");
 
     onSnapshot(collection(db, "momentos"), (snapshot) => {
-      onlineMoments = snapshot.docs.map((doc) => ({
+      moments = snapshot.docs.map((doc) => ({
         id: doc.id,
         ...doc.data()
       }));
 
       renderTimeline();
-      setTimelineStatus(onlineMoments.length
-        ? `${onlineMoments.length} momento(s) online carregado(s).`
-        : "Pronto para receber novos momentos online."
-      );
     }, (error) => {
-      setTimelineStatus("Não foi possível carregar os momentos online. Confira as regras do Firestore.");
-      setFormStatus(`Erro do Firebase: ${error.message}`, "error");
+      setTimelineStatus("Não foi possível carregar os momentos.");
+      setFormStatus(`Não foi possível carregar os momentos: ${error.message}`, "error");
     });
   } catch (error) {
     saveMomentButton.disabled = true;
-    setTimelineStatus("Não foi possível iniciar o Firebase.");
-    setFormStatus(`Erro ao iniciar Firebase: ${error.message}`, "error");
+    setTimelineStatus("Não foi possível carregar os momentos.");
+    setFormStatus(`Não foi possível preparar o salvamento: ${error.message}`, "error");
   }
 }
 
@@ -405,7 +389,7 @@ async function handleMomentSubmit(event) {
   event.preventDefault();
 
   if (!firebaseReady) {
-    setFormStatus("Configure o Firebase antes de salvar momentos online.", "error");
+    setFormStatus("Não foi possível preparar o salvamento.", "error");
     return;
   }
 
@@ -447,7 +431,7 @@ async function handleMomentSubmit(event) {
     });
 
     momentForm.reset();
-    setFormStatus("Momento salvo online com sucesso.", "success");
+    setFormStatus("Momento salvo com sucesso.", "success");
   } catch (error) {
     const wrongPasswordCodes = ["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found"];
     let message = `Não foi possível salvar: ${error.message}`;

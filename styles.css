@@ -264,8 +264,7 @@ section {
 
 .message-card,
 .counter-card,
-.moment-form-card,
-.setup-card {
+.moment-form-card {
   background: var(--bg-card);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 28px;
@@ -276,15 +275,13 @@ section {
 
 .message-card h3,
 .counter-card h3,
-.moment-form-card h3,
-.setup-card h3 {
+.moment-form-card h3 {
   font-size: 1.55rem;
   margin-bottom: 16px;
 }
 
 .message-card p,
-.counter-card p,
-.setup-card p {
+.counter-card p {
   color: var(--text-muted);
   line-height: 1.9;
 }
@@ -416,28 +413,9 @@ section {
   top: -50px;
 }
 
-.timeline-date {
-  display: inline-block;
-  color: var(--pink);
-  font-size: 0.82rem;
-  font-weight: 800;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  margin-bottom: 10px;
-  position: relative;
-  z-index: 1;
-}
-
 .timeline-content h3 {
   font-size: 1.35rem;
   margin-bottom: 0;
-  position: relative;
-  z-index: 1;
-}
-
-.timeline-content p {
-  color: var(--text-muted);
-  line-height: 1.75;
   position: relative;
   z-index: 1;
 }
@@ -544,23 +522,6 @@ textarea:focus {
 
 .form-status.success {
   color: #ffd7e6;
-}
-
-.setup-card {
-  max-width: 820px;
-  margin: 22px auto 0;
-  border-style: dashed;
-}
-
-.setup-card[hidden] {
-  display: none;
-}
-
-.setup-card code {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  padding: 2px 6px;
 }
 
 .moment-modal {
@@ -765,7 +726,6 @@ footer {
   .message-card,
   .counter-card,
   .moment-form-card,
-  .setup-card,
   .timeline-content,
   .final-card {
     padding: 24px;
