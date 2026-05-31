@@ -154,6 +154,10 @@ header {
 }
 
 .hero h1 {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.16em;
   font-family: "Great Vibes", cursive;
   font-size: clamp(4rem, 11vw, 8.8rem);
   line-height: 0.9;
@@ -162,7 +166,7 @@ header {
   text-shadow: 0 0 34px rgba(255, 45, 135, 0.52);
 }
 
-.hero h1 span {
+.hero-highlight {
   background: linear-gradient(90deg, #fff, #ffd3e3, var(--pink), var(--red));
   -webkit-background-clip: text;
   background-clip: text;
@@ -1048,8 +1052,26 @@ footer {
   }
 
   .hero h1 {
-    font-size: clamp(3.25rem, 16vw, 4.6rem);
-    white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    font-size: clamp(4rem, 21vw, 5.8rem);
+    line-height: 0.78;
+    white-space: normal;
+  }
+
+  .hero-name-cecilia {
+    order: 1;
+  }
+
+  .hero-amp {
+    order: 2;
+    font-size: 0.72em;
+  }
+
+  .hero-name-matheus {
+    order: 3;
   }
 
   .badge {
