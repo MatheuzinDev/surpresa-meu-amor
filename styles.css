@@ -150,23 +150,29 @@ header {
   background: rgba(255, 255, 255, 0.11);
   color: var(--text-muted);
   font-size: 0.9rem;
-  margin-bottom: 26px;
+  margin-bottom: 34px;
+  position: relative;
+  z-index: 2;
 }
 
 .hero h1 {
-  display: inline-flex;
-  align-items: baseline;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 0.16em;
+  gap: 0.12em;
   font-family: "Great Vibes", cursive;
-  font-size: clamp(4rem, 11vw, 8.8rem);
-  line-height: 0.9;
+  font-size: clamp(4rem, 9vw, 7.6rem);
+  line-height: 1.08;
   font-weight: 400;
-  margin-bottom: 24px;
+  margin: 0 auto 34px;
+  position: relative;
+  z-index: 1;
   text-shadow: 0 0 34px rgba(255, 45, 135, 0.52);
 }
 
 .hero-highlight {
+  display: inline-block;
+  padding: 0.14em 0.03em;
   background: linear-gradient(90deg, #fff, #ffd3e3, var(--pink), var(--red));
   -webkit-background-clip: text;
   background-clip: text;
@@ -1055,13 +1061,13 @@ footer {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.04em;
+    gap: 0;
     position: relative;
     z-index: 1;
-    margin-top: 30px;
-    margin-bottom: 32px;
-    font-size: clamp(3.55rem, 18vw, 5rem);
-    line-height: 0.9;
+    margin-top: 0;
+    margin-bottom: 30px;
+    font-size: clamp(3.35rem, 17vw, 4.65rem);
+    line-height: 0.98;
     white-space: normal;
   }
 
@@ -1075,7 +1081,7 @@ footer {
 
   .hero-amp {
     order: 2;
-    font-size: 0.62em;
+    font-size: 0.56em;
   }
 
   .hero-name-matheus {
@@ -1084,6 +1090,7 @@ footer {
 
   .badge {
     font-size: 0.8rem;
+    margin-bottom: 24px;
   }
 
   .counter-grid {
