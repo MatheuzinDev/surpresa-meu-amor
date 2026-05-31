@@ -374,6 +374,11 @@ function createTimelineItem(moment, index) {
   content.setAttribute("tabindex", "0");
   content.setAttribute("aria-label", `Abrir momento: ${moment.title}`);
 
+  const date = document.createElement("span");
+  date.className = "timeline-date";
+  date.textContent = formatDate(moment.date);
+  content.appendChild(date);
+
   const imageUrl = isSafeImageUrl(moment.imageUrl);
   if (imageUrl) {
     const image = document.createElement("img");

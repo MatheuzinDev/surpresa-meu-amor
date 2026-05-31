@@ -450,6 +450,18 @@ section {
   z-index: 1;
 }
 
+.timeline-date {
+  display: inline-block;
+  position: relative;
+  z-index: 1;
+  color: var(--pink);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
 .timeline-photo,
 .timeline-placeholder {
   width: 100%;
