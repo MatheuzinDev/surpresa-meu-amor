@@ -93,17 +93,77 @@
 
         <p class="timeline-status" id="timelineStatus"></p>
         <div class="timeline" id="timeline"></div>
+      </div>
+    </section>
 
-        <div class="moment-form-card">
-          <h3 id="momentFormTitle">Adicionar momento nosso</h3>
+    <section class="final-section">
+      <div class="container">
+        <div class="final-card">
+          <h2>Feliz Dia dos Namorados</h2>
           <p>
-            Qualquer pessoa pode ver a página, mas só o casal consegue guardar uma nova lembrança :). 
+            Que a nossa história continue sendo escrita com carinho, parceria, cuidado e amor.
+            Que cada novo capítulo tenha um motivo para sorrir e que a gente nunca esqueça de
+            valorizar os pequenos detalhes que fazem tudo valer a pena.
           </p>
+          <a href="#linha-do-tempo" class="btn btn-primary">Rever nossa linha do tempo</a>
+        </div>
+      </div>
+    </section>
+  </main>
 
-          <div class="manager-status" id="managerStatus" hidden>
-            <span id="managerStatusText"></span>
-            <button class="btn btn-secondary btn-small" id="logoutButton" type="button">Sair</button>
-          </div>
+  <footer>
+    Feito por Matheus para Cecília.
+  </footer>
+
+  <button class="secret-access" id="secretAccessButton" type="button" aria-label="Acesso do casal" aria-controls="loginModal managementScreen" aria-expanded="false">♡</button>
+
+  <div class="login-modal" id="loginModal" role="dialog" aria-modal="true" aria-labelledby="loginTitle" hidden>
+    <div class="login-modal-backdrop" id="loginModalBackdrop"></div>
+    <div class="login-modal-card" role="document">
+      <button class="login-modal-close" id="closeLoginModal" type="button" aria-label="Fechar login">×</button>
+      <span class="login-kicker">Acesso secreto</span>
+      <h2 id="loginTitle">Entrar no gerenciamento</h2>
+      <p>Somente Matheus e Cecília podem criar, atualizar ou apagar momentos.</p>
+
+      <form class="login-form" id="loginForm">
+        <label for="accessEmail">
+          E-mail
+          <input id="accessEmail" type="email" autocomplete="username" placeholder="Digite seu e-mail" required>
+        </label>
+
+        <label for="accessPassword">
+          Senha
+          <input id="accessPassword" type="password" autocomplete="current-password" placeholder="Digite sua senha" required>
+        </label>
+
+        <button class="btn btn-primary" id="loginSubmitButton" type="submit">Entrar</button>
+        <p class="form-status" id="loginStatus"></p>
+      </form>
+    </div>
+  </div>
+
+  <section class="management-screen" id="managementScreen" aria-labelledby="managementTitle" hidden>
+    <div class="management-shell">
+      <div class="management-header">
+        <div>
+          <span class="login-kicker">Gerenciamento do casal</span>
+          <h2 id="managementTitle">Momentos da nossa história</h2>
+          <p>Crie novas lembranças, atualize detalhes ou apague momentos cadastrados.</p>
+        </div>
+        <div class="management-actions">
+          <button class="btn btn-secondary" id="closeManagementButton" type="button">Voltar ao site</button>
+          <button class="btn btn-danger" id="logoutButton" type="button">Sair</button>
+        </div>
+      </div>
+
+      <div class="manager-status" id="managerStatus" hidden>
+        <span id="managerStatusText"></span>
+      </div>
+
+      <div class="management-grid">
+        <div class="moment-form-card" id="managementPanel">
+          <h3 id="momentFormTitle">Criar momento</h3>
+          <p>Preencha os detalhes para adicionar uma lembrança à linha do tempo.</p>
 
           <form class="moment-form" id="momentForm">
             <div class="form-grid">
@@ -123,54 +183,27 @@
               <textarea id="momentDescription" maxlength="700" placeholder="Conte o que aconteceu e por que esse momento foi especial." required></textarea>
             </label>
 
-            <div class="form-grid">
-              <label for="momentImage">
-                Foto
-                <input id="momentImage" type="file" accept="image/*">
-              </label>
-            </div>
-
-            <div class="form-grid auth-fields" id="authFields">
-              <label for="accessEmail">
-                E-mail
-                <input id="accessEmail" type="email" autocomplete="username" placeholder="Digite seu e-mail" required>
-              </label>
-
-              <label for="accessPassword">
-                Senha
-                <input id="accessPassword" type="password" autocomplete="current-password" placeholder="Digite a senha para salvar" required>
-              </label>
-            </div>
+            <label for="momentImage">
+              Foto
+              <input id="momentImage" type="file" accept="image/*">
+            </label>
 
             <div class="form-actions">
-              <button class="btn btn-primary" id="saveMomentButton" type="submit">Salvar momento</button>
-              <button class="btn btn-secondary" id="loginButton" type="button">Entrar para editar</button>
+              <button class="btn btn-primary" id="saveMomentButton" type="submit">Criar momento</button>
               <button class="btn btn-secondary" id="cancelEditButton" type="button" hidden>Cancelar edição</button>
             </div>
             <p class="form-status" id="formStatus"></p>
           </form>
         </div>
-      </div>
-    </section>
 
-    <section class="final-section">
-      <div class="container">
-        <div class="final-card">
-          <h2>Feliz Dia dos Namorados</h2>
-          <p>
-            Que a nossa história continue sendo escrita com carinho, parceria, cuidado e amor.
-            Que cada novo capítulo tenha um motivo para sorrir e que a gente nunca esqueça de
-            valorizar os pequenos detalhes que fazem tudo valer a pena.
-          </p>
-          <a href="#linha-do-tempo" class="btn btn-primary">Guardar mais um momento</a>
+        <div class="management-list-card">
+          <h3>Momentos cadastrados</h3>
+          <p class="management-list-status" id="managementListStatus"></p>
+          <div class="management-list" id="managementList"></div>
         </div>
       </div>
-    </section>
-  </main>
-
-  <footer>
-    Feito por Matheus para Cecília.
-  </footer>
+    </div>
+  </section>
 
   <div class="moment-modal" id="momentModal" role="dialog" aria-modal="true" aria-labelledby="modalMomentTitle" hidden>
     <div class="moment-modal-backdrop" id="momentModalBackdrop"></div>

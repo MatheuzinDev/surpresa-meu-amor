@@ -42,13 +42,23 @@ const daysTogether = document.getElementById("daysTogether");
 const hoursTogether = document.getElementById("hoursTogether");
 const minutesTogether = document.getElementById("minutesTogether");
 const heartsContainer = document.getElementById("heartsContainer");
+const managementPanel = document.getElementById("managementPanel");
+const secretAccessButton = document.getElementById("secretAccessButton");
+const loginModal = document.getElementById("loginModal");
+const loginModalBackdrop = document.getElementById("loginModalBackdrop");
+const closeLoginModalButton = document.getElementById("closeLoginModal");
+const loginForm = document.getElementById("loginForm");
+const loginSubmitButton = document.getElementById("loginSubmitButton");
+const loginStatus = document.getElementById("loginStatus");
+const managementScreen = document.getElementById("managementScreen");
+const closeManagementButton = document.getElementById("closeManagementButton");
+const managementList = document.getElementById("managementList");
+const managementListStatus = document.getElementById("managementListStatus");
 const momentForm = document.getElementById("momentForm");
 const momentFormTitle = document.getElementById("momentFormTitle");
 const saveMomentButton = document.getElementById("saveMomentButton");
-const loginButton = document.getElementById("loginButton");
 const cancelEditButton = document.getElementById("cancelEditButton");
 const formStatus = document.getElementById("formStatus");
-const authFields = document.getElementById("authFields");
 const accessEmailInput = document.getElementById("accessEmail");
 const accessPasswordInput = document.getElementById("accessPassword");
 const managerStatus = document.getElementById("managerStatus");
@@ -94,8 +104,17 @@ function setFormStatus(message, type = "") {
   formStatus.className = `form-status ${type}`.trim();
 }
 
+function setLoginStatus(message, type = "") {
+  loginStatus.textContent = message;
+  loginStatus.className = `form-status ${type}`.trim();
+}
+
 function setTimelineStatus(message) {
   timelineStatus.textContent = message;
+}
+
+function setManagementListStatus(message) {
+  managementListStatus.textContent = message;
 }
 
 function formatDate(dateString) {
@@ -118,6 +137,13 @@ function normalizeMoment(rawMoment, fallbackId) {
   };
 }
 
+function getDisplayMoments() {
+  return [...moments]
+    .map((moment, index) => normalizeMoment(moment, `moment-${index}`))
+    .filter((moment) => moment.date && moment.title && moment.description)
+    .sort((a, b) => a.date.localeCompare(b.date));
+}
+
 function isSafeImageUrl(url) {
   if (!url) {
     return "";
@@ -129,6 +155,11 @@ function isSafeImageUrl(url) {
   } catch {
     return "";
   }
+}
+
+function syncOverlayState() {
+  const hasOpenOverlay = !momentModal.hidden || !loginModal.hidden || !managementScreen.hidden;
+  document.body.classList.toggle("modal-open", hasOpenOverlay);
 }
 
 function openMomentModal(moment) {
@@ -153,7 +184,7 @@ function openMomentModal(moment) {
   }
 
   momentModal.hidden = false;
-  document.body.classList.add("modal-open");
+  syncOverlayState();
   updateModalActions();
   closeMomentModalButton.focus();
 }
@@ -164,8 +195,8 @@ function closeMomentModal() {
   }
 
   momentModal.hidden = true;
-  document.body.classList.remove("modal-open");
   currentModalMoment = null;
+  syncOverlayState();
 
   if (elementFocusedBeforeModal && typeof elementFocusedBeforeModal.focus === "function") {
     elementFocusedBeforeModal.focus();
@@ -173,32 +204,106 @@ function closeMomentModal() {
 }
 
 function handleModalKeydown(event) {
-  if (event.key === "Escape") {
+  if (event.key !== "Escape") {
+    return;
+  }
+
+  if (!loginModal.hidden) {
+    closeLoginModal();
+    return;
+  }
+
+  if (!momentModal.hidden) {
     closeMomentModal();
+    return;
+  }
+
+  if (!managementScreen.hidden) {
+    closeManagementScreen();
   }
 }
 
 function updateModalActions() {
-  modalMomentActions.hidden = !currentUser || !currentModalMoment;
+  modalMomentActions.hidden = true;
 }
 
 function updateManagerState() {
   const isLoggedIn = Boolean(currentUser);
 
   managerStatus.hidden = !isLoggedIn;
-  authFields.hidden = isLoggedIn;
-  loginButton.hidden = isLoggedIn;
-  accessEmailInput.disabled = isLoggedIn;
-  accessPasswordInput.disabled = isLoggedIn;
-  accessEmailInput.required = !isLoggedIn;
-  accessPasswordInput.required = !isLoggedIn;
 
   if (isLoggedIn) {
-    managerStatusText.textContent = `Modo edição ativo: ${currentUser.email}`;
+    managerStatusText.textContent = `Gerenciamento ativo: ${currentUser.email}`;
     accessPasswordInput.value = "";
   }
 
   updateModalActions();
+}
+
+function openLoginModal() {
+  elementFocusedBeforeModal = document.activeElement;
+  loginModal.hidden = false;
+  loginSubmitButton.disabled = !firebaseReady;
+  setLoginStatus(firebaseReady ? "" : "Não foi possível preparar o acesso.", firebaseReady ? "" : "error");
+  syncOverlayState();
+  window.setTimeout(() => accessEmailInput.focus(), 100);
+}
+
+function closeLoginModal() {
+  if (loginModal.hidden) {
+    return;
+  }
+
+  loginModal.hidden = true;
+  accessPasswordInput.value = "";
+  syncOverlayState();
+
+  if (elementFocusedBeforeModal && typeof elementFocusedBeforeModal.focus === "function") {
+    elementFocusedBeforeModal.focus();
+  }
+}
+
+function openManagementScreen(options = {}) {
+  const { resetForm = false } = options;
+
+  if (!currentUser) {
+    openLoginModal();
+    return;
+  }
+
+  loginModal.hidden = true;
+  managementScreen.hidden = false;
+  secretAccessButton.setAttribute("aria-expanded", "true");
+  updateManagerState();
+  renderManagementList();
+
+  if (resetForm) {
+    resetMomentForm({ clearStatus: false });
+  }
+
+  setFormStatus("Gerenciamento ativo. Você pode criar, atualizar ou apagar momentos.");
+  syncOverlayState();
+}
+
+function closeManagementScreen() {
+  if (managementScreen.hidden) {
+    return;
+  }
+
+  managementScreen.hidden = true;
+  secretAccessButton.setAttribute("aria-expanded", "false");
+  resetMomentForm({ clearStatus: false });
+  setFormStatus("");
+  syncOverlayState();
+}
+
+function handleSecretAccessClick() {
+  if (currentUser) {
+    openManagementScreen();
+    return;
+  }
+
+  openLoginModal();
 }
 
 function getAuthFields() {
@@ -213,14 +318,7 @@ async function getAuthenticatedUser() {
     return currentUser;
   }
 
-  const { accessEmail, password } = getAuthFields();
-
-  if (!accessEmail || !password) {
-    throw new Error("Digite e-mail e senha para continuar.");
-  }
-
-  const credential = await signInWithEmailAndPassword(auth, accessEmail, password);
-  return credential.user;
+  throw new Error("Entre no gerenciamento para continuar.");
 }
 
 function resetMomentForm(options = {}) {
@@ -228,26 +326,32 @@ function resetMomentForm(options = {}) {
 
   editingMoment = null;
   momentForm.reset();
-  momentFormTitle.textContent = "Adicionar momento nosso";
-  saveMomentButton.textContent = "Salvar momento";
+  momentFormTitle.textContent = "Criar momento";
+  saveMomentButton.textContent = "Criar momento";
   cancelEditButton.hidden = true;
   accessPasswordInput.value = "";
 
   if (clearStatus) {
     setFormStatus(currentUser
-      ? "Modo edição ativo. Você pode adicionar, editar ou apagar momentos."
-      : "Digite um e-mail autorizado e a senha para salvar um novo momento."
+      ? "Gerenciamento ativo. Você pode criar, atualizar ou apagar momentos."
+      : "Entre no gerenciamento para continuar."
     );
   }
 }
 
 function startEditMoment(moment) {
+  if (!currentUser) {
+    openLoginModal();
+    return;
+  }
+
+  openManagementScreen();
   editingMoment = moment;
   document.getElementById("momentDate").value = moment.date;
   document.getElementById("momentTitle").value = moment.title;
   document.getElementById("momentDescription").value = moment.description;
   document.getElementById("momentImage").value = "";
-  momentFormTitle.textContent = "Editar momento";
+  momentFormTitle.textContent = "Atualizar momento";
   saveMomentButton.textContent = "Atualizar momento";
   cancelEditButton.hidden = false;
   closeMomentModal();
@@ -326,15 +430,12 @@ function observeTimelineItems() {
 }
 
 function renderTimeline() {
-  const allMoments = [...moments]
-    .map((moment, index) => normalizeMoment(moment, `moment-${index}`))
-    .filter((moment) => moment.date && moment.title && moment.description)
-    .sort((a, b) => a.date.localeCompare(b.date));
+  const allMoments = getDisplayMoments();
 
   timeline.innerHTML = "";
 
   if (!allMoments.length) {
-    setTimelineStatus("Ainda não há momentos por aqui. Adicione o primeiro.");
+    setTimelineStatus("Ainda não há momentos por aqui.");
     return;
   }
 
@@ -345,6 +446,82 @@ function renderTimeline() {
   });
 
   observeTimelineItems();
+}
+
+function createManagementItem(moment) {
+  const item = document.createElement("article");
+  item.className = "management-item";
+
+  const imageUrl = isSafeImageUrl(moment.imageUrl);
+  if (imageUrl) {
+    const image = document.createElement("img");
+    image.className = "management-item-image";
+    image.src = imageUrl;
+    image.alt = moment.title;
+    image.loading = "lazy";
+    item.appendChild(image);
+  } else {
+    const placeholder = document.createElement("div");
+    placeholder.className = "management-item-placeholder";
+    placeholder.textContent = "♡";
+    item.appendChild(placeholder);
+  }
+
+  const body = document.createElement("div");
+  body.className = "management-item-body";
+
+  const date = document.createElement("span");
+  date.className = "management-item-date";
+  date.textContent = formatDate(moment.date);
+
+  const title = document.createElement("h4");
+  title.textContent = moment.title;
+
+  const description = document.createElement("p");
+  description.textContent = moment.description.length > 140
+    ? `${moment.description.slice(0, 140).trim()}...`
+    : moment.description;
+
+  const actions = document.createElement("div");
+  actions.className = "management-item-actions";
+
+  const editButton = document.createElement("button");
+  editButton.className = "btn btn-secondary btn-small";
+  editButton.type = "button";
+  editButton.textContent = "Atualizar";
+  editButton.addEventListener("click", () => startEditMoment(moment));
+
+  const deleteButton = document.createElement("button");
+  deleteButton.className = "btn btn-danger btn-small";
+  deleteButton.type = "button";
+  deleteButton.textContent = "Apagar";
+  deleteButton.addEventListener("click", () => handleDeleteMoment(moment, [editButton, deleteButton]));
+
+  actions.append(editButton, deleteButton);
+  body.append(date, title, description, actions);
+  item.appendChild(body);
+
+  return item;
+}
+
+function renderManagementList() {
+  const allMoments = getDisplayMoments();
+  managementList.innerHTML = "";
+
+  if (!currentUser) {
+    setManagementListStatus("Entre para ver os momentos cadastrados.");
+    return;
+  }
+
+  if (!allMoments.length) {
+    setManagementListStatus("Nenhum momento cadastrado ainda.");
+    return;
+  }
+
+  setManagementListStatus("");
+  allMoments.forEach((moment) => {
+    managementList.appendChild(createManagementItem(moment));
+  });
 }
 
 function updateCounter() {
@@ -468,8 +645,10 @@ function initAnalytics(app) {
 async function initFirebase() {
   if (!isFirebaseConfigured()) {
     saveMomentButton.disabled = true;
-    setTimelineStatus("Ainda não há momentos por aqui. Adicione o primeiro.");
+    loginSubmitButton.disabled = true;
+    setTimelineStatus("Ainda não há momentos por aqui.");
     setFormStatus("Não foi possível preparar o salvamento.", "error");
+    setLoginStatus("Não foi possível preparar o acesso.", "error");
     return;
   }
 
@@ -485,15 +664,21 @@ async function initFirebase() {
     onAuthStateChanged(auth, (user) => {
       currentUser = user;
       updateManagerState();
+      renderManagementList();
 
-      if (user) {
-        setFormStatus("Modo edição ativo. Você pode adicionar, editar ou apagar momentos.");
+      if (!user && !managementScreen.hidden) {
+        closeManagementScreen();
+      }
+
+      if (user && !managementScreen.hidden) {
+        setFormStatus("Gerenciamento ativo. Você pode criar, atualizar ou apagar momentos.");
       }
     });
 
     saveMomentButton.disabled = false;
+    loginSubmitButton.disabled = false;
     setTimelineStatus("Carregando momentos...");
-    setFormStatus("Digite um e-mail autorizado e a senha para salvar um novo momento.");
+    setFormStatus("Entre no gerenciamento para criar, atualizar ou apagar momentos.");
 
     onSnapshot(collection(db, "momentos"), (snapshot) => {
       moments = snapshot.docs.map((doc) => ({
@@ -502,14 +687,18 @@ async function initFirebase() {
       }));
 
       renderTimeline();
+      renderManagementList();
     }, (error) => {
       setTimelineStatus("Não foi possível carregar os momentos.");
+      setManagementListStatus("Não foi possível carregar os momentos.");
       setFormStatus(`Não foi possível carregar os momentos: ${error.message}`, "error");
     });
   } catch (error) {
     saveMomentButton.disabled = true;
+    loginSubmitButton.disabled = true;
     setTimelineStatus("Não foi possível carregar os momentos.");
     setFormStatus(`Não foi possível preparar o salvamento: ${error.message}`, "error");
+    setLoginStatus(`Não foi possível preparar o acesso: ${error.message}`, "error");
   }
 }
 
@@ -518,6 +707,12 @@ async function handleMomentSubmit(event) {
 
   if (!firebaseReady) {
     setFormStatus("Não foi possível preparar o salvamento.", "error");
+    return;
+  }
+
+  if (!currentUser) {
+    setFormStatus("Entre no gerenciamento para continuar.", "error");
+    openLoginModal();
     return;
   }
 
@@ -540,7 +735,7 @@ async function handleMomentSubmit(event) {
   }
 
   saveMomentButton.disabled = true;
-  setFormStatus(currentUser ? "Salvando momento..." : "Validando acesso e salvando momento...");
+  setFormStatus(editingMoment ? "Atualizando momento..." : "Criando momento...");
 
   try {
     const user = await getAuthenticatedUser();
@@ -581,7 +776,7 @@ async function handleMomentSubmit(event) {
 
     const momentReference = doc(collection(db, "momentos"));
     const imageData = await uploadMomentImage(imageFile);
-    setFormStatus("Salvando momento...");
+    setFormStatus("Criando momento...");
     await setDoc(momentReference, {
       ...formData,
       ...imageData,
@@ -590,7 +785,7 @@ async function handleMomentSubmit(event) {
     });
 
     resetMomentForm({ clearStatus: false });
-    setFormStatus("Momento salvo com sucesso.", "success");
+    setFormStatus("Momento criado com sucesso.", "success");
   } catch (error) {
     const wrongPasswordCodes = ["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found"];
     let message = `Não foi possível salvar: ${error.message}`;
@@ -600,7 +795,7 @@ async function handleMomentSubmit(event) {
     }
 
     if (error.code === "permission-denied") {
-      message = "Esse e-mail não tem permissão para adicionar momentos.";
+      message = "Esse e-mail não tem permissão para adicionar, editar ou apagar momentos.";
     }
 
     setFormStatus(message, "error");
@@ -610,39 +805,57 @@ async function handleMomentSubmit(event) {
   }
 }
 
-async function handleLoginClick() {
+async function handleLoginSubmit(event) {
+  event.preventDefault();
+
   if (!firebaseReady) {
-    setFormStatus("Não foi possível preparar o acesso.", "error");
+    setLoginStatus("Não foi possível preparar o acesso.", "error");
     return;
   }
 
-  loginButton.disabled = true;
-  setFormStatus("Validando acesso...");
+  const { accessEmail, password } = getAuthFields();
+
+  if (!accessEmail || !password) {
+    setLoginStatus("Digite e-mail e senha para entrar.", "error");
+    return;
+  }
+
+  loginSubmitButton.disabled = true;
+  setLoginStatus("Entrando...");
 
   try {
-    await getAuthenticatedUser();
-    setFormStatus("Acesso liberado. Abra um momento para editar ou apagar.", "success");
+    const credential = await signInWithEmailAndPassword(auth, accessEmail, password);
+    currentUser = credential.user;
+    updateManagerState();
+    loginForm.reset();
+    closeLoginModal();
+    openManagementScreen({ resetForm: true });
+    setFormStatus("Acesso liberado. Você pode criar, atualizar ou apagar momentos.", "success");
   } catch (error) {
     const wrongPasswordCodes = ["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found"];
     const message = wrongPasswordCodes.includes(error.code)
       ? "E-mail ou senha incorretos."
       : `Não foi possível entrar: ${error.message}`;
 
-    setFormStatus(message, "error");
+    setLoginStatus(message, "error");
   } finally {
-    loginButton.disabled = false;
+    loginSubmitButton.disabled = false;
     accessPasswordInput.value = "";
   }
 }
 
 async function handleLogoutClick() {
   await signOut(auth);
+  currentUser = null;
+  updateManagerState();
   resetMomentForm({ clearStatus: false });
-  setFormStatus("Você saiu do modo edição.");
+  closeManagementScreen();
+  closeLoginModal();
+  setLoginStatus("Você saiu do gerenciamento.");
 }
 
-async function handleDeleteMoment() {
-  if (!currentModalMoment || !currentUser) {
+async function handleDeleteMoment(momentToDelete, actionButtons = []) {
+  if (!momentToDelete || !currentUser) {
     return;
   }
 
@@ -651,9 +864,9 @@ async function handleDeleteMoment() {
     return;
   }
 
-  const momentToDelete = currentModalMoment;
-  deleteMomentButton.disabled = true;
-  editMomentButton.disabled = true;
+  actionButtons.forEach((button) => {
+    button.disabled = true;
+  });
 
   try {
     await deleteDoc(doc(db, "momentos", momentToDelete.id));
@@ -681,10 +894,15 @@ async function handleDeleteMoment() {
 
     setFormStatus("Momento apagado com sucesso.", "success");
   } catch (error) {
-    setFormStatus(`Não foi possível apagar o momento: ${error.message}`, "error");
+    const message = error.code === "permission-denied"
+      ? "Esse e-mail não tem permissão para apagar momentos."
+      : `Não foi possível apagar o momento: ${error.message}`;
+
+    setFormStatus(message, "error");
   } finally {
-    deleteMomentButton.disabled = false;
-    editMomentButton.disabled = false;
+    actionButtons.forEach((button) => {
+      button.disabled = false;
+    });
   }
 }
 
@@ -695,15 +913,19 @@ initFirebase();
 window.setInterval(updateCounter, 60000);
 window.setInterval(createHeart, 900);
 momentForm.addEventListener("submit", handleMomentSubmit);
-loginButton.addEventListener("click", handleLoginClick);
+loginForm.addEventListener("submit", handleLoginSubmit);
+secretAccessButton.addEventListener("click", handleSecretAccessClick);
+closeLoginModalButton.addEventListener("click", closeLoginModal);
+loginModalBackdrop.addEventListener("click", closeLoginModal);
+closeManagementButton.addEventListener("click", closeManagementScreen);
 logoutButton.addEventListener("click", handleLogoutClick);
 cancelEditButton.addEventListener("click", () => resetMomentForm());
 editMomentButton.addEventListener("click", () => {
-  if (currentModalMoment) {
+  if (currentModalMoment && currentUser) {
     startEditMoment(currentModalMoment);
   }
 });
-deleteMomentButton.addEventListener("click", handleDeleteMoment);
+deleteMomentButton.addEventListener("click", () => handleDeleteMoment(currentModalMoment, [editMomentButton, deleteMomentButton]));
 closeMomentModalButton.addEventListener("click", closeMomentModal);
 momentModalBackdrop.addEventListener("click", closeMomentModal);
 window.addEventListener("keydown", handleModalKeydown);
